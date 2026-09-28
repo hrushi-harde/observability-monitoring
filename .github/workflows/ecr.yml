@@ -22,11 +22,34 @@ jobs:
 
       - name: Smoke-test container
         run: |
+          set -euo pipefail
           docker run --detach --name todo-app-test --publish 8080:8080 todo-app:${{ github.sha }}
-          trap 'docker rm --force todo-app-test >/dev/null 2>&1 || true' EXIT
-          curl --fail --retry 10 --retry-connrefused --retry-delay 1 http://localhost:8080/ | grep -q "TO DO Application"
-          curl --fail http://localhost:8080/style.css >/dev/null
-          curl --fail http://localhost:8080/script.js >/dev/null
+          cleanup() {
+            status=$?
+            if [ "$status" -ne 0 ]; then
+              docker logs todo-app-test || true
+            fi
+            docker rm --force todo-app-test >/dev/null 2>&1 || true
+            exit "$status"
+          }
+          trap cleanup EXIT
+
+          ready=false
+          for attempt in {1..10}; do
+            if curl --noproxy '*' --silent --show-error --fail http://127.0.0.1:8080/ --output /tmp/todo-app-index.html; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+
+          if [ "$ready" != true ]; then
+            echo "Container did not serve the home page after 10 attempts" >&2
+            exit 1
+          fi
+          grep -q "TO DO Application" /tmp/todo-app-index.html
+          curl --noproxy '*' --fail --show-error http://127.0.0.1:8080/style.css --output /dev/null
+          curl --noproxy '*' --fail --show-error http://127.0.0.1:8080/script.js --output /dev/null
 
       - name: Configure AWS credentials
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
