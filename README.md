@@ -52,6 +52,6 @@ One-time AWS setup:
 2. Configure the AWS IAM OIDC identity provider for `token.actions.githubusercontent.com` if your AWS account does not already have it.
 3. Create an IAM role trusted for the GitHub OIDC audience `sts.amazonaws.com` and subject `repo:hrushikesh-harde/todo-app:ref:refs/heads/main`.
 4. Grant that role `ecr:GetAuthorizationToken` on `*` and these actions on the ECR repository: `ecr:BatchCheckLayerAvailability`, `ecr:CompleteLayerUpload`, `ecr:InitiateLayerUpload`, `ecr:PutImage`, and `ecr:UploadLayerPart`.
-5. In GitHub repository settings, add the Actions secret `AWS_ROLE_TO_ASSUME` containing the role ARN, and the Actions variables `AWS_REGION` and `ECR_REPOSITORY` containing your AWS region and ECR repository name.
+5. In GitHub repository settings, add the Actions secret `AWS_ROLE_TO_ASSUME` containing the role ARN, the Actions variable `ECR_REPOSITORY` containing the ECR repository name, and either the Actions variable or secret `AWS_REGION` containing your AWS region.
 
 The published image is available as `<account-id>.dkr.ecr.<region>.amazonaws.com/<repository>:<commit-sha>` and `:latest`.
