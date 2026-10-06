@@ -1,11 +1,22 @@
-FROM node:22-alpine
+# Stage 1: Build
+FROM node:20-alpine AS builder
 
-ENV NODE_ENV=production
 WORKDIR /app
 
-COPY --chown=node:node index.html style.css script.js server.js ./
+COPY package*.json ./
 
-USER node
-EXPOSE 8080
+RUN npm install
 
-CMD ["node", "server.js"]
+COPY . .
+
+RUN npm run build
+
+
+# Stage 2: Serve
+FROM nginx:alpine
+
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
